@@ -1,0 +1,26 @@
+export CLUSTER_NAME=cnh-classes-001
+gcloud container --quiet clusters create --async ${CLUSTER_NAME} --num-nodes 1 --zone us-west1-b
+gcloud container node-pools create gpu-pool001 --cluster ${CLUSTER_NAME} --enable-autoscaling --max-nodes=8 --min-nodes=0 --accelerator=type=nvidia-tesla-v100 --region us-west1-b
+
+helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
+
+cat > config.yaml <<'EOFA'
+config:
+ BinderHub:
+  use_registry: true
+  image_prefix: christophernhill/binderhub-christophernhill-
+EOFA
+
+
+helm install jupyterhub/binderhub --version=0.2.0-3b53fce  --name=bhub01 --namespace=bhub01 -f secret.yaml -f config.yaml
+kubectl get svc --namespace bhub01 
+
+cat > config.yaml <<'EOFA'
+config:
+ BinderHub:
+  use_registry: true
+  image_prefix: christophernhill/binderhub-christophernhill-
+  hub_url: http://35.247.79.183 
+EOFA
+
+helm upgrade bhub01 jupyterhub/binderhub --version=0.2.0-3b53fce  -f secret.yaml -f config.yaml
